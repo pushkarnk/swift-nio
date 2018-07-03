@@ -396,4 +396,13 @@ public class EventLoopTest : XCTestCase {
         XCTAssertTrue(result.isEmpty)
 
     }
+
+    func testMultiThreadedEventLoopGroupIterator() {
+        let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+        var count = 0
+        for eventLoop in eventLoopGroup {
+            count += 1
+        }
+        XCTAssertEqual(count, System.coreCount)
+    }
 }

@@ -654,7 +654,7 @@ extension EventLoopGroup {
 typealias ThreadInitializer = (Thread) -> Void
 
 /// An `EventLoopGroup` which will create multiple `EventLoop`s, each tied to its own `Thread`.
-final public class MultiThreadedEventLoopGroup: EventLoopGroup {
+final public class MultiThreadedEventLoopGroup: EventLoopGroup, Sequence {
 
     private static let threadSpecificEventLoop = ThreadSpecificVariable<SelectableEventLoop>()
 
@@ -736,6 +736,9 @@ final public class MultiThreadedEventLoopGroup: EventLoopGroup {
         return eventLoops[abs(index.add(1) % eventLoops.count)]
     }
 
+    public func makeIterator() -> MultiThreadedEventLoopGroup.Iterator {
+        return Iterator(for: eventLoops)
+    }
     internal func unsafeClose() throws {
         for loop in eventLoops {
             // TODO: Should we log this somehow or just rethrow the first error ?
@@ -770,6 +773,24 @@ final public class MultiThreadedEventLoopGroup: EventLoopGroup {
             }
 
             callback(error)
+        }
+    }
+
+    public struct Iterator: IteratorProtocol {
+
+        let eventLoops: [EventLoop]
+        var iteratorIndex = 0
+
+        init(for eventLoops: [EventLoop]) {
+            self.eventLoops = eventLoops
+        }
+
+        mutating public func next() -> EventLoop? {
+            guard iteratorIndex < eventLoops.count else { return nil }
+            defer {
+                iteratorIndex += 1
+            }
+            return eventLoops[iteratorIndex]
         }
     }
 }
